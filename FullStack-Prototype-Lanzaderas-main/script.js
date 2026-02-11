@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const startBtn = document.getElementById('getStartedBtn');
+    const startBtn = document.getElementById('getStartedBtn'); //something dli pwede tagaan ug alteration
 
     startBtn.addEventListener('click', () => {
         // Simple simulation of initializing the app state

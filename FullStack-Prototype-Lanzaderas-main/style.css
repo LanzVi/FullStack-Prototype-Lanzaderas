@@ -11,7 +11,7 @@ body {
     line-height: 1.6;
 }
 
-/* Navbar */
+/* Navbar. where "Full-Stack App...." is displayed.*/
 .navbar {
     background-color: #212529;
     color: white;
@@ -21,12 +21,14 @@ body {
     align-items: center;
 }
 
+/* container sa "Login" and "Register"*/
 .nav-links {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
+/*login and reigster nga words mismo*/
 .nav-links a {
     color: #adb5bd;
     text-decoration: none;
