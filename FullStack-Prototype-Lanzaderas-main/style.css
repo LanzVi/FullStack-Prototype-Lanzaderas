@@ -96,3 +96,13 @@ h1 {
 .btn-primary:hover {
     background-color: #1557b0;
 }
+
+/* The default state: Curtain is closed (hidden), also the css code for phase 2*/
+.page {
+    display: none;
+}
+
+/* The active state: Spotlight is on (visible) */
+.page.active {
+    display: block;
+}
