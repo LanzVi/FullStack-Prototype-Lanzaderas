@@ -10,14 +10,29 @@
 <body>
     <header class="navbar">
         <div class="logo">Full-Stack App (Marie Chastine Lanzaderas)</div><!--Title plus my name on it as indicator who's who???-->
-        <nav class="nav-links">
+        <!--<nav class="nav-links">
             <a href="#">Login</a>
             <a href="#">Register</a>
-        </nav>
+        </nav>-->
+        <nav class="nav-links">
+    <a href="#/login" class="role-logged-out">Login</a>
+    <a href="#/register" class="role-logged-out">Register</a>
+
+    <div class="role-logged-in">
+        <a href="#/profile">My Profile</a>
+        <a href="#/requests">My Requests</a>
+        <a href="#/logout" id="logoutLink" class="text-danger">Logout</a>
+    </div>
+
+    <div class="role-admin">
+        <hr>
+        <a href="#/employees">Manage Employees</a>
+        <a href="#/accounts">Manage Accounts</a>
+    </div>
+</nav>
     </header>
 
     <main class="container mt-4">
-        <!--Phase 1-->
         <h1>Welcome to Full-Stack App</h1>
         <p class="subtitle">A static prototype before backend integration. Simulates:</p>
         
@@ -35,7 +50,6 @@
 
         <button id="getStartedBtn" class="btn-primary">Get Started &rarr;</button>
         
-        <!--Phase 2-->
         <section id="home-page" class="page active">
             </section>
 

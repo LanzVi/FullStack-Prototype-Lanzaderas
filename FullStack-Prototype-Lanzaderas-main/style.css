@@ -97,7 +97,7 @@ h1 {
     background-color: #1557b0;
 }
 
-/* The default state: Curtain is closed (hidden), also the css code for phase 2*/
+/* The default state: Curtain is closed (hidden)*/
 .page {
     display: none;
 }
@@ -106,3 +106,13 @@ h1 {
 .page.active {
     display: block;
 }
+
+/* Hide 'Logged-In' items if the user is NOT authenticated */
+body.not-authenticated .role-logged-in { display: none !important; }
+
+/* Hide 'Logged-Out' items (like Login/Register) if the user IS authenticated */
+body.authenticated .role-logged-out { display: none !important; }
+
+/* Hide Admin items unless the body has the 'is-admin' badge */
+.role-admin { display: none !important; }
+body.is-admin .role-admin { display: block !important; }

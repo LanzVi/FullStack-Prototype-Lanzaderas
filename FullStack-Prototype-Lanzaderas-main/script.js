@@ -1,4 +1,3 @@
-// Phase 1 
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('getStartedBtn'); //something dli pwede tagaan ug alteration
 
@@ -19,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Phase 2:
+//Routing?
 function handleRouting() {
     // 1. Get the current "cue" from the URL (e.g., "#/login")
     const hash = window.location.hash || '#/';
@@ -49,3 +48,52 @@ window.addEventListener('hashchange', handleRouting);
 
 // Run once when the page first loads 
 window.addEventListener('load', handleRouting);
+
+let currentUser = null; // This holds the "Member" currently in the club 
+
+//Authentication
+function setAuthState(isAuth, user = null) {
+    currentUser = user;
+    const body = document.body;
+
+    if (isAuth && user) {
+        // User is logged in (Wearing the wristband)
+        body.classList.add('authenticated');
+        body.classList.remove('not-authenticated');
+        
+        // If the user is an Admin, give them the "VIP" badge 
+        if (user.role === 'Admin') {
+            body.classList.add('is-admin');
+        } else {
+            body.classList.remove('is-admin');
+        }
+    } else {
+        // User is logged out (Wristband removed)
+
+        body.classList.remove('authenticated', 'is-admin');
+        body.classList.add('not-authenticated');
+        localStorage.removeItem('auth_token'); // Throw away the wristband 
+    }
+}
+
+//Registration
+function handleRegistration(userData) {
+    // 1. Check if email already exists in our 'database' 
+    const existingUser = window.db.accounts.find(u => u.email === userData.email);
+    
+    if (existingUser) {
+        alert("Email already registered!");
+        return;
+    }
+
+    // 2. Save new account as 'unverified'
+    const newUser = { ...userData, verified: false, role: 'User' };
+    window.db.accounts.push(newUser);
+    
+    // 3. Store in localStorage so we don't forget them
+    saveToStorage();
+    localStorage.setItem('unverified_email', userData.email);
+
+    // 4. Send them to the verification "Set"
+    window.location.hash = '#/verify-email';
+}
