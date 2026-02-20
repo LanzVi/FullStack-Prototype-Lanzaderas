@@ -57,13 +57,72 @@
             </section>
 
         <section id="login-page" class="page">
-            </section>
-
+            <div class="card shadow-sm p-4 mx-auto" style="max-width: 400px;">
+                <h2 class="text-center mb-4">Login</h2>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="loginEmail" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                </form>
+                <div class="mt-3 text-center">
+                    <p>New here? <a href="#/register">Register now</a></p>
+                </div>
+            </div>
+        </section>
+        
         <section id="profile-page" class="page">
-            </section>
+            <div class="card shadow-sm mx-auto" style="max-width: 500px;">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3>User Profile</h3>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-light d-inline-block p-4">
+                            <span style="font-size: 3rem;">👤</span>
+                        </div>
+                    </div>
+                    
+                    <h4 id="profileName">Loading...</h4>
+                    <p class="text-muted" id="profileEmail"></p>
+                    
+                    <hr>
+                    
+                    <div class="row text-start">
+                        <div class="col-6"><strong>Role:</strong></div>
+                        <div class="col-6"><span class="badge bg-info text-dark" id="profileRole">User</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <section id="accounts-page" class="page"> ... </section>
         <section id="employees-page" class="page"> ... </section>
+        <section id="verify-email-page" class="page"> <!--Email Verification-->
+            <div class="card shadow-sm p-4 text-center">
+                <h2>Verify Your Email</h2>
+                <p>A verification link has been sent to your email address.</p>
+                
+                <div class="alert alert-info my-3">
+                    <strong id="displayVerifyEmail">...</strong>
+                </div>
+
+                <p class="text-muted small">For demo purposes, click below to simulate verification:</p>
+                
+                <button class="btn btn-success w-100" onclick="simulateVerification()">
+                    Email Verification Successful.
+                </button>
+                
+                <div class="mt-3">
+                    <a href="#/login" class="text-decoration-none">Go to Login</a>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
