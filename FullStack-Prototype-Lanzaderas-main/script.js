@@ -31,34 +31,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 //Routing?
+// Update your existing handleRouting function:
 function handleRouting() {
-    //Get the current "cue" from the URL (e.g., "#/login")
     const hash = window.location.hash || '#/';
+    
+    // 1. CLEAR THE STAGE: Hide every section first
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 
-    //Hide all sets (turn off all lights)
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-
-    if (hash === '#/profile') {
-        renderProfile(); // <--- CALL THE POPULATOR HERE
-        document.getElementById('profile-page').classList.add('active');
-    }
-
-    //spotlight the correct set 
+    // 2. CHECK THE "CUE" (The Route)
     if (hash === '#/' || hash === '') {
         document.getElementById('home-page').classList.add('active');
-    } else if (hash === '#/login') {
+    } 
+    
+    else if (hash === '#/login') {
         document.getElementById('login-page').classList.add('active');
-    } else if (hash === '#/profile') {
-        // Protected route logic: Redirect if not logged in 
-        if (!localStorage.getItem('auth_token')) {
-            window.location.hash = '#/login';
-            return;
-        }
-        document.getElementById('profile-page').classList.add('active');
     }
+
+    // 3. THE SECURITY CHECK (The "Bouncer" Logic)
+    else if (hash === '#/accounts') {
+        // This is where the code sits. It acts as a gatekeeper.
+        if (currentUser && currentUser.role === 'Admin') {
+            renderAccounts(); // Success: Let them in and show the data
+            document.getElementById('accounts-page').classList.add('active');
+        } else {
+            // Failure: Kick them out to a safe page
+            alert("Access Denied: Admins Only!");
+            window.location.hash = '#/profile'; 
+        }
+    }
+    
+    // ... repeat this pattern for #/employees and #/departments
 }
+
 
 // Listen for the "cue" change (whenever the URL hash changes) 
 window.addEventListener('hashchange', handleRouting);
@@ -203,4 +207,43 @@ function renderProfile() {
     nameDisplay.innerText = `${currentUser.firstName} ${currentUser.lastName}`;
     emailDisplay.innerText = currentUser.email;
     roleDisplay.innerText = currentUser.role;
+}
+
+//Admin Account Management
+function renderAccounts() {
+    const tbody = document.getElementById('accountsTableBody');
+    const userCount = document.getElementById('userCount');
+    
+    //Clear the table first (empty the ledger)
+    tbody.innerHTML = '';
+    userCount.innerText = window.db.accounts.length;
+
+    //Loop through the "Database"
+    window.db.accounts.forEach((user, index) => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${user.firstName} ${user.lastName}</td>
+            <td>${user.email}</td>
+            <td><span class="badge ${user.role === 'Admin' ? 'bg-danger' : 'bg-primary'}">${user.role}</span></td>
+            <td>
+                ${user.verified ? 
+                    '<span class="text-success">✔ Verified</span>' : 
+                    '<span class="text-warning">⌛ Pending</span>'}
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${index})">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Function to delete a user
+function deleteAccount(index) {
+    if (confirm("Are you sure you want to delete this account?")) {
+        window.db.accounts.splice(index, 1); // Remove from array
+        saveToStorage(); // Save to localStorage
+        renderAccounts(); // Refresh the table
+    }
 }

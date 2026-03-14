@@ -101,8 +101,71 @@
             </div>
         </section>
 
-        <section id="accounts-page" class="page"> ... </section>
-        <section id="employees-page" class="page"> ... </section>
+        <section id="accounts-page" class="page">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Manage Accounts</h2>
+                <span class="badge bg-secondary">Total Users: <span id="userCount">0</span></span>
+            </div>
+
+            <div class="table-responsive card shadow-sm">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountsTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+        <section id="employees-page" class="page">
+            <div class="d-flex justify-content-between mb-4">
+                <h2>Employee Directory</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#employeeModal">
+                    + Add Employee
+                </button>
+            </div>
+
+            <table class="table shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Department</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTableBody"></tbody>
+            </table>
+
+            <div class="modal fade" id="employeeModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="employeeForm">
+                            <div class="modal-header">
+                                <h5 class="modal-title">New Employee</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" id="empFirstName" class="form-control mb-2" placeholder="First Name" required>
+                                <input type="text" id="empLastName" class="form-control mb-2" placeholder="Last Name" required>
+                                <input type="email" id="empEmail" class="form-control mb-2" placeholder="Email" required>
+                                <select id="empDept" class="form-select" required>
+                                    </select>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save Employee</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section id="verify-email-page" class="page"> <!--Email Verification-->
             <div class="card shadow-sm p-4 text-center">
                 <h2>Verify Your Email</h2>
