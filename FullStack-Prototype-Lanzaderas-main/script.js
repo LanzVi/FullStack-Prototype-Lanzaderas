@@ -11,24 +11,52 @@ window.addEventListener('load', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const startBtn = document.getElementById('getStartedBtn'); //something dli pwede tagaan ug alteration
+    const startBtn = document.getElementById('getStartedBtn');
 
     startBtn.addEventListener('click', () => {
-        // Simple simulation of initializing the app state
-        const initialState = {
-            isLoggedIn: false,
-            role: 'guest',
-            employees: []
-        };
-
-        if (!localStorage.getItem('app_data')) {
-            localStorage.setItem('app_data', JSON.stringify(initialState));
-            console.log('App data initialized in localStorage.');
-        }
-
-        alert('Prototype sequence initiated! Check your console.');
+        // Move the user to the register page
+        window.location.hash = '#/register';
     });
 });
+
+//Logout Logic  
+document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent the link from jumping
+    
+    //Clear the Auth State (The "Bouncer" removes the wristband)
+    setAuthState(false);
+    
+    //Remove items from the "Locker" (localStorage)
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('current_user_email');
+    
+    //Kick them back to the Home or Login page
+    alert("You have been logged out.");
+    window.location.hash = '#/login';
+});
+
+const STORAGE_KEY = 'ipt_demo_v1';
+window.db = { accounts: [], employees: [], departments: [], requests: [] };
+
+function saveToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(window.db));
+}
+
+function loadFromStorage() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+        window.db = JSON.parse(data);
+    } else {
+        // Seed initial admin data
+        window.db.accounts.push({
+            firstName: 'Admin', lastName: 'User',
+            email: 'admin@example.com', password: 'Password123!',
+            role: 'Admin', verified: true
+        });
+        saveToStorage();
+    }
+}
+loadFromStorage();
 
 //Routing?
 // Update your existing handleRouting function:
@@ -59,10 +87,39 @@ function handleRouting() {
             window.location.hash = '#/profile'; 
         }
     }
-    
-    // ... repeat this pattern for #/employees and #/departments
+
+    else if (hash === '#/profile') {
+        renderProfile();
+        document.getElementById('profile-page').classList.add('active');
+    } 
+    else if (hash === '#/employees') {
+        if (currentUser && currentUser.role === 'Admin') {
+            renderEmployees();
+            document.getElementById('employees-page').classList.add('active');
+        } else {
+            window.location.hash = '#/profile';
+        }
+    }
+    else if (hash === '#/requests') {
+        renderRequests(); // You still need to write this function!
+        document.getElementById('requests-page').classList.add('active');
+    }
 }
 
+//Register Form Listener
+document.getElementById('registerForm').addEventListener('submit', (e) => {
+    e.preventDefault(); // Prevents the page from refreshing
+
+    const userData = {
+        firstName: document.getElementById('regFirst').value,
+        lastName: document.getElementById('regLast').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPass').value
+    };
+
+    // Pass the data to your existing registration logic
+    handleRegistration(userData);
+});
 
 // Listen for the "cue" change (whenever the URL hash changes) 
 window.addEventListener('hashchange', handleRouting);
@@ -99,7 +156,6 @@ function setAuthState(isAuth, user = null) {
 
 //Registration
 function handleRegistration(userData) {
-    // 1. Check if email already exists in our 'database' 
     const existingUser = window.db.accounts.find(u => u.email === userData.email);
     
     if (existingUser) {
@@ -107,15 +163,15 @@ function handleRegistration(userData) {
         return;
     }
 
-    // 2. Save new account as 'unverified'
     const newUser = { ...userData, verified: false, role: 'User' };
     window.db.accounts.push(newUser);
     
-    // 3. Store in localStorage so we don't forget thems
     saveToStorage();
     localStorage.setItem('unverified_email', userData.email);
 
-    // 4. Send them to the verification "Set"
+    // NEW: Update the UI text before switching pages
+    document.getElementById('displayVerifyEmail').innerText = userData.email;
+
     window.location.hash = '#/verify-email';
 }
 
@@ -245,5 +301,143 @@ function deleteAccount(index) {
         window.db.accounts.splice(index, 1); // Remove from array
         saveToStorage(); // Save to localStorage
         renderAccounts(); // Refresh the table
+    }
+}
+
+//Employee Management
+function renderEmployees() {
+    const tbody = document.getElementById('employeeTableBody');
+    tbody.innerHTML = '';
+
+    window.db.employees.forEach((emp, index) => {
+        const row = `
+            <tr>
+                <td>${emp.firstName} ${emp.lastName}</td>
+                <td>${emp.department}</td>
+                <td>${emp.email}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${index})">Delete</button>
+                </td>
+            </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+
+// Logic to handle the Form Submission
+document.getElementById('employeeForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const newEmp = {
+        firstName: document.getElementById('empFirstName').value,
+        lastName: document.getElementById('empLastName').value,
+        email: document.getElementById('empEmail').value,
+        department: document.getElementById('empDept').value
+    };
+
+    window.db.employees.push(newEmp);
+    saveToStorage();
+    renderEmployees();
+
+    // Close the modal using Bootstrap's built-in command
+    bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
+    e.target.reset(); // Clear the form
+});
+
+//Dynamic Item Management
+function addItemRow() {
+    const container = document.getElementById('requestItemsContainer');
+    const rowId = Date.now(); // Unique ID for this specific row
+
+    const rowHtml = `
+        <div class="row g-2 mb-2 align-items-center" id="row-${rowId}">
+            <div class="col-8">
+                <input type="text" class="form-control item-name" placeholder="Item name" required>
+            </div>
+            <div class="col-3">
+                <input type="number" class="form-control item-qty" value="1" min="1" required>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowId})">×</button>
+            </div>
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', rowHtml);
+}
+
+function removeRow(id) {
+    document.getElementById(`row-${id}`).remove();
+}
+
+//Saving the "Array of Objects"
+document.getElementById('requestForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    //Collect all the dynamic rows
+    const itemElements = document.querySelectorAll('#requestItemsContainer .row');
+    const items = [];
+
+    itemElements.forEach(row => {
+        items.push({
+            name: row.querySelector('.item-name').value,
+            qty: row.querySelector('.item-qty').value
+        });
+    });
+
+    if (items.length === 0) {
+        alert("Please add at least one item!");
+        return;
+    }
+
+    //Build the final Request object
+    const newRequest = {
+        id: Date.now(),
+        userEmail: currentUser.email,
+        type: document.getElementById('reqType').value,
+        items: items,
+        status: 'Pending',
+        date: new Date().toLocaleDateString()
+    };
+
+    //Save to our simulated database
+    window.db.requests.push(newRequest);
+    saveToStorage();
+    
+    //Update UI
+    alert("Request submitted successfully!");
+    bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+    document.getElementById('requestItemsContainer').innerHTML = ''; // Reset rows
+    e.target.reset();
+});
+
+function showToast(message) {
+    // Logic to create a temporary div and remove it after 3 seconds
+    console.log("Toast shown: " + message); 
+}
+
+function renderRequests() {
+    const tbody = document.getElementById('requestsTableBody');
+    tbody.innerHTML = '';
+
+    // Filter requests so users only see their own
+    const myRequests = window.db.requests.filter(r => r.userEmail === currentUser.email);
+
+    myRequests.forEach(req => {
+        const itemSummary = req.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+        const row = `
+            <tr>
+                <td>${req.date}</td>
+                <td>${req.type}</td>
+                <td>${itemSummary}</td>
+                <td><span class="badge status-${req.status.toLowerCase()}">${req.status}</span></td>
+            </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+
+function deleteEmployee(index) {
+    if (confirm("Delete this employee?")) {
+        window.db.employees.splice(index, 1);
+        saveToStorage();
+        renderEmployees();
     }
 }

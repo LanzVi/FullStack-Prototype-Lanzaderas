@@ -116,3 +116,14 @@ body.authenticated .role-logged-out { display: none !important; }
 /* Hide Admin items unless the body has the 'is-admin' badge */
 .role-admin { display: none !important; }
 body.is-admin .role-admin { display: block !important; }
+
+.status-pending { background-color: #ffc107; color: #000; } /* Warning/Yellow */
+.status-approved { background-color: #198754; color: #fff; } /* Success/Green */
+.status-rejected { background-color: #dc3545; color: #fff; } /* Danger/Red */
+
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
