@@ -145,24 +145,29 @@ function setAuthState(isAuth, user = null) {
     }
 }
 //Registration
-function handleRegistration(userData) {
-    const existingUser = window.db.accounts.find(u => u.email === userData.email);
-    
-    if (existingUser) {
-        alert("Email already registered!");
-        return;
+async function handleRegistration(userData) {
+    try {
+        const response = await fetch('http://localhost:3000/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                username: userData.email, // your backend uses 'username'
+                password: userData.password,
+                role: 'user' 
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Registration successful! Please log in.");
+            window.location.hash = '#/login';
+        } else {
+            alert("Registration failed: " + data.error);
+        }
+    } catch (err) {
+        alert("Server connection failed.");
     }
-
-    const newUser = { ...userData, verified: false, role: 'User' };
-    window.db.accounts.push(newUser);
-    
-    saveToStorage();
-    localStorage.setItem('unverified_email', userData.email);
-
-    // NEW: Update the UI text before switching pages
-    document.getElementById('displayVerifyEmail').innerText = userData.email;
-
-    window.location.hash = '#/verify-email';
 }
 
 //Email Verification (Simulated)
