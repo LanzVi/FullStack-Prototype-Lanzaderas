@@ -73,7 +73,7 @@ function handleRouting() {
         renderProfile();
         document.getElementById('profile-page').classList.add('active');
     } else if (hash === '#/accounts') {
-        if (currentUser && currentUser.role === 'Admin') {
+        if (currentUser && currentUser.role === 'admin') {
             renderAccounts(); // This now calls the API!
             document.getElementById('accounts-page').classList.add('active');
         } else {
@@ -86,7 +86,7 @@ function handleRouting() {
         document.getElementById('profile-page').classList.add('active');
     } 
     else if (hash === '#/employees') {
-        if (currentUser && currentUser.role === 'Admin') {
+        if (currentUser && currentUser.role === 'admin') {
             renderEmployees();
             document.getElementById('employees-page').classList.add('active');
         } else {
@@ -133,7 +133,7 @@ function setAuthState(isAuth, user = null) {
         body.classList.remove('not-authenticated');
         
         // Hide or show "Admin" specific buttons/sections via CSS classes
-        if (user.role === 'Admin') {
+        if (user.role === 'admin') {
             body.classList.add('is-admin');
         } else {
             body.classList.remove('is-admin');
@@ -203,7 +203,7 @@ async function handleLogin(email, password) {
         const response = await fetch('http://localhost:3000/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ username: email, password })
         });
 
         const data = await response.json();
