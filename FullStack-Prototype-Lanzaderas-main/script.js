@@ -1,13 +1,23 @@
-window.addEventListener('load', () => {
-    const token = localStorage.getItem('auth_token');
+// --- 1. AUTHENTICATION HEADER HELPER ---
+//Creates the Bearer token header for protected routes
+function getAuthHeader() {
+    const token = sessionStorage.getItem('authToken');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// --- 2. SESSION INITIALIZATION ---
+window.addEventListener('load', async () => {
+    const token = sessionStorage.getItem('authToken');
     const email = localStorage.getItem('current_user_email');
     
     if (token && email) {
+        // Here you would typically call an /api/validate-token or /api/profile
+        // For now, we restore the state using the cached email
         const user = window.db.accounts.find(u => u.email === email);
         if (user) setAuthState(true, user);
     }
     
-    handleRouting(); // Then check where the user should be
+    handleRouting();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,73 +28,56 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.hash = '#/register';
     });
 });
-
+//------------------------------------------------------
 //Logout Logic  
 document.getElementById('logoutLink').addEventListener('click', (e) => {
-    e.preventDefault(); // Prevent the link from jumping
-    
-    //Clear the Auth State (The "Bouncer" removes the wristband)
+    e.preventDefault();
     setAuthState(false);
-    
-    //Remove items from the "Locker" (localStorage)
-    localStorage.removeItem('auth_token');
+    sessionStorage.removeItem('authToken');
     localStorage.removeItem('current_user_email');
-    
-    //Kick them back to the Home or Login page
-    alert("You have been logged out.");
     window.location.hash = '#/login';
 });
 
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleLogin(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+});
+//---------------------------------------------------------
+//local storage logic (Simulating a Database)
 const STORAGE_KEY = 'ipt_demo_v1';
 window.db = { accounts: [], employees: [], departments: [], requests: [] };
+let currentUser = null;
 
 function saveToStorage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(window.db));
 }
 
+// Load local data (Keep this for UI state/fallback)
 function loadFromStorage() {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-        window.db = JSON.parse(data);
-    } else {
-        // Seed initial admin data
-        window.db.accounts.push({
-            firstName: 'Admin', lastName: 'User',
-            email: 'admin@example.com', password: 'Password123!',
-            role: 'Admin', verified: true
-        });
-        saveToStorage();
-    }
+    if (data) window.db = JSON.parse(data);
 }
 loadFromStorage();
-
-//Routing?
-// Update your existing handleRouting function:
+//--------------------------------------------------------------
 function handleRouting() {
     const hash = window.location.hash || '#/';
-    
-    // 1. CLEAR THE STAGE: Hide every section first
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 
-    // 2. CHECK THE "CUE" (The Route)
     if (hash === '#/' || hash === '') {
         document.getElementById('home-page').classList.add('active');
-    } 
-    
-    else if (hash === '#/login') {
+    } else if (hash === '#/login') {
         document.getElementById('login-page').classList.add('active');
-    }
-
-    // 3. THE SECURITY CHECK (The "Bouncer" Logic)
-    else if (hash === '#/accounts') {
-        // This is where the code sits. It acts as a gatekeeper.
+    } else if (hash === '#/register') {
+        document.getElementById('register-page').classList.add('active');
+    } else if (hash === '#/profile') {
+        renderProfile();
+        document.getElementById('profile-page').classList.add('active');
+    } else if (hash === '#/accounts') {
         if (currentUser && currentUser.role === 'Admin') {
-            renderAccounts(); // Success: Let them in and show the data
+            renderAccounts(); // This now calls the API!
             document.getElementById('accounts-page').classList.add('active');
         } else {
-            // Failure: Kick them out to a safe page
-            alert("Access Denied: Admins Only!");
-            window.location.hash = '#/profile'; 
+            window.location.hash = '#/profile';
         }
     }
 
@@ -105,7 +98,7 @@ function handleRouting() {
         document.getElementById('requests-page').classList.add('active');
     }
 }
-
+//-------------------------------------------------------------
 //Register Form Listener
 document.getElementById('registerForm').addEventListener('submit', (e) => {
     e.preventDefault(); // Prevents the page from refreshing
@@ -129,31 +122,28 @@ window.addEventListener('load', handleRouting);
 
 let currentUser = null; // This holds the "Member" currently in the club 
 
-//Authentication
+// --- 5. UPDATED UI STATE MANAGEMENT ---
+// Instruction Step 3: Update UI based on user role and auth status
 function setAuthState(isAuth, user = null) {
     currentUser = user;
     const body = document.body;
 
     if (isAuth && user) {
-        // User is logged in (Wearing the wristband)
         body.classList.add('authenticated');
         body.classList.remove('not-authenticated');
         
-        // If the user is an Admin, give them the "VIP" badge 
+        // Hide or show "Admin" specific buttons/sections via CSS classes
         if (user.role === 'Admin') {
             body.classList.add('is-admin');
         } else {
             body.classList.remove('is-admin');
         }
     } else {
-        // User is logged out (Wristband removed)
-
         body.classList.remove('authenticated', 'is-admin');
         body.classList.add('not-authenticated');
-        localStorage.removeItem('auth_token'); // Throw away the wristband 
+        sessionStorage.removeItem('authToken');
     }
 }
-
 //Registration
 function handleRegistration(userData) {
     const existingUser = window.db.accounts.find(u => u.email === userData.email);
@@ -206,45 +196,34 @@ function simulateVerification() {
     }
 }
 
-//Login Logic
-function handleLogin(email, password) {
-    //Finds the user in our local "Database"
-    const user = window.db.accounts.find(u => u.email === email && u.password === password);
+// --- 3. LOGIN LOGIC (REPLACES LOCALSTORAGE) ---
+// Instruction Step 1: Replace the old localStorage login logic with a fetch call
+async function handleLogin(email, password) {
+    try {
+        const response = await fetch('http://localhost:3000/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-    if (!user) {
-        alert("Invalid email or password.");
-        return;
+        const data = await response.json();
+
+        if (response.ok) {
+            // Instruction Step 1: Save token in sessionStorage for persistence
+            sessionStorage.setItem('authToken', data.token);
+            localStorage.setItem('current_user_email', data.user.email);
+            
+            setAuthState(true, data.user);
+            alert(`Welcome back, ${data.user.firstName}!`);
+            window.location.hash = '#/profile';
+        } else {
+            // Instruction Step 1: Handle failed login
+            alert('Login failed: ' + data.error);
+        }
+    } catch (err) {
+        alert('Network error: Could not connect to the backend.');
     }
-
-    //Checks if they finished the verification step
-    if (!user.verified) {
-        alert("Please verify your email first!");
-        window.location.hash = '#/verify-email';
-        return;
-    }
-
-    // 3. Create a "Fake" JWT Token (The Wristband)
-    const fakeToken = btoa(user.email + ":" + Date.now()); // Simple base64 string
-    localStorage.setItem('auth_token', fakeToken);
-    localStorage.setItem('current_user_email', user.email);
-
-    //Updates the App State
-    setAuthState(true, user);
-
-    alert(`Welcome back, ${user.firstName}!`);
-    
-    //Sends them to their Profile
-    window.location.hash = '#/profile';
 }
-
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-    e.preventDefault(); // Stop the page from refreshing!
-    
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPassword').value;
-    
-    handleLogin(email, pass);
-});
 
 //Profile Management
 function renderProfile() {
@@ -265,34 +244,39 @@ function renderProfile() {
     roleDisplay.innerText = currentUser.role;
 }
 
-//Admin Account Management
-function renderAccounts() {
+async function renderAccounts() {
     const tbody = document.getElementById('accountsTableBody');
     const userCount = document.getElementById('userCount');
     
-    //Clear the table first (empty the ledger)
-    tbody.innerHTML = '';
-    userCount.innerText = window.db.accounts.length;
+    try {
+        const res = await fetch('http://localhost:3000/api/admin/accounts', {
+            headers: getAuthHeader() 
+        });
 
-    //Loop through the "Database"
-    window.db.accounts.forEach((user, index) => {
-        const row = document.createElement('tr');
-        
-        row.innerHTML = `
-            <td>${user.firstName} ${user.lastName}</td>
-            <td>${user.email}</td>
-            <td><span class="badge ${user.role === 'Admin' ? 'bg-danger' : 'bg-primary'}">${user.role}</span></td>
-            <td>
-                ${user.verified ? 
-                    '<span class="text-success">✔ Verified</span>' : 
-                    '<span class="text-warning">⌛ Pending</span>'}
-            </td>
-            <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${index})">Delete</button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
+        if (res.ok) {
+            const accounts = await res.json();
+            tbody.innerHTML = '';
+            userCount.innerText = accounts.length;
+
+            accounts.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.firstName} ${user.lastName}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge ${user.role === 'Admin' ? 'bg-danger' : 'bg-primary'}">${user.role}</span></td>
+                    <td>${user.verified ? '<span class="text-success">✔ Verified</span>' : '<span class="text-warning">⌛ Pending</span>'}</td>
+                    <td><button class="btn btn-sm btn-outline-danger" onclick="deleteAccount(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            // Instruction Step 2: Handle "Access Denied"
+            alert("Access Denied: Admin privileges required.");
+            window.location.hash = '#/profile';
+        }
+    } catch (err) {
+        console.error("Fetch error:", err);
+    }
 }
 
 // Function to delete a user
@@ -440,4 +424,4 @@ function deleteEmployee(index) {
         saveToStorage();
         renderEmployees();
     }
-}
+} 
